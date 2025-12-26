@@ -1,8 +1,8 @@
-name: Extract resume.pdf to resume.json
+name: Extract resume to JSON
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ "main" ]
     paths:
       - "resume.pdf"
       - "tools/extract_resume.py"
@@ -18,33 +18,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install pdftotext (poppler-utils)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y poppler-utils
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Generate resume.json
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install pdfplumber
+
+      - name: Extract resume
         run: |
           python tools/extract_resume.py
 
-      - name: Commit resume.json if changed
+      - name: Commit JSON outputs
         run: |
-          # stage the file first so new/untracked file is included
-          git add resume.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # if nothing staged, skip
+          git add resume.json resume_raw.json || true
+
+          # If nothing changed, exit cleanly
           if git diff --cached --quiet; then
-            echo "No changes in resume.json"
+            echo "No changes to commit."
             exit 0
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: update resume.json from resume.pdf"
+          git commit -m "Update resume.json from resume.pdf"
           git push
-
