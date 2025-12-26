@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -15,9 +16,10 @@
     <div class="bg__vignette"></div>
 
     <div class="bg__hud">
-      <div class="bg__caption" id="bgCaption">旅行者，快来啊！一起休息一下吧...</div>
+      <div class="bg__caption" id="bgCaption">Traveler—come on, take a break with me...</div>
 
       <div class="bg__right">
+        <!-- Optional small clock -->
         <div class="bg__clock" id="bgClock">
           <strong id="clockText"></strong>
         </div>
@@ -28,6 +30,33 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Top-right Calendar Widget (EN) -->
+  <div class="cal" id="calWidget">
+    <div class="cal__top">
+      <div>
+        <div class="cal__time" id="calTime">--:--:--</div>
+        <div class="cal__date" id="calDate">---, --- --, ----</div>
+        <div class="cal__sub" id="calSub">Local time</div>
+      </div>
+
+      <div class="cal__nav">
+        <button class="cal__btn" id="calPrev" aria-label="Previous month" type="button">‹</button>
+        <button class="cal__btn" id="calNext" aria-label="Next month" type="button">›</button>
+      </div>
+    </div>
+
+    <div class="cal__monthRow">
+      <div class="cal__month" id="calMonth">----</div>
+      <button class="cal__today" id="calToday" type="button">Today</button>
+    </div>
+
+    <div class="cal__dow">
+      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+    </div>
+
+    <div class="cal__grid" id="calGrid"></div>
   </div>
 
   <!-- Foreground content -->
@@ -99,7 +128,6 @@
           <span class="chip">AWS</span><span class="chip">Docker</span><span class="chip">CloudWatch</span>
           <span class="chip">Git</span><span class="chip">JUnit</span><span class="chip">JWT</span>
         </div>
-
       </section>
     </section>
 
