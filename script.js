@@ -29,13 +29,19 @@
   const bgPrevBtn = $("bgPrevBtn");
   const bgNextBtn = $("bgNextBtn");
 
-  // ✅ 你必须保证 images 里这些文件真实存在，否则会被自动过滤掉
+  // ✅ 改成你仓库 images/ 里真实存在的文件名
   const rawImages = [
     "./images/qishen.jpg",
-    // 下面三行：把文件名改成你 images 文件夹真实存在的图片名
-    "./images/1.jpg",
-    "./images/2.jpg",
-    "./images/3.jpg",
+    "./images/funingna.jpg",
+    "./images/ganyu.jpg",
+    "./images/keqing.jpg",
+    "./images/leidian.jpg",
+    "./images/naweiya.jpg",
+    "./images/naxida.jpg",
+    "./images/nilu.jpg",
+    "./images/shenzi.jpg",
+    "./images/wendi.jpg",
+    "./images/zhongli.jpg",
   ];
 
   const intervalMs = 6000;
@@ -59,7 +65,6 @@
   async function initBgImages() {
     if (!bgImg) return;
 
-    // preload and filter invalid
     const results = await Promise.all(rawImages.map(preloadOne));
     bgImages = results.filter((r) => r.ok).map((r) => r.src);
 
@@ -83,6 +88,7 @@
 
   function setBg(i, immediate = false) {
     if (!bgImg || bgImages.length === 0) return;
+
     bgIdx = (i + bgImages.length) % bgImages.length;
     const nextSrc = bgImages[bgIdx];
 
@@ -94,7 +100,7 @@
       return;
     }
 
-    // simple fade
+    // fade
     bgImg.style.opacity = "0";
     setTimeout(() => {
       bgImg.src = nextSrc;
