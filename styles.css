@@ -1,4 +1,3 @@
-/* styles.css */
 :root{
   --accent: rgb(181, 192, 184);
   --text: rgba(255,255,255,.92);
@@ -22,8 +21,8 @@ body{
 .bg{
   position: fixed;
   inset: 0;
+  z-index: -2;
   overflow: hidden;
-  z-index: 0;
 }
 
 .bg__img{
@@ -35,8 +34,6 @@ body{
   transform: scale(1.04);
   filter: brightness(.75) contrast(1.05) saturate(1.08);
   transition: opacity .35s ease, transform 3s ease;
-  pointer-events: none; /* ✅ do not block clicks */
-  z-index: 0;
 }
 
 .bg__vignette{
@@ -46,24 +43,18 @@ body{
     radial-gradient(80% 60% at 30% 10%, rgba(255,255,255,.08), rgba(0,0,0,0) 60%),
     linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.55) 55%, rgba(0,0,0,.72));
   pointer-events: none;
-  z-index: 1;
 }
 
-/* bottom-right controls */
-.bg__hud{
+/* Fixed controls: always clickable */
+.bg__controlsFixed{
   position: fixed;
-  right: 20px;
+  right: 24px;
   bottom: 20px;
-  z-index: 2147483647; /* always on top */
-  pointer-events: auto;
-}
-
-.bg__controls{
   display:flex;
   gap:10px;
-  pointer-events:auto;
+  z-index: 99999;
+  pointer-events: auto;
 }
-.bg__controls, .bg__controls *{ pointer-events:auto; }
 
 .icon-btn{
   width:44px;
@@ -86,12 +77,12 @@ body{
 /* ===== Foreground layout ===== */
 .page{
   width: min(1040px, calc(100% - 28px));
-  margin: 36px auto 80px;
+  margin: 36px auto 60px;
   display:flex;
   flex-direction:column;
   gap:18px;
   position:relative;
-  z-index: 5;
+  z-index:1;
 }
 
 .panel{
@@ -101,7 +92,6 @@ body{
   padding: 22px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .hero__top{
@@ -198,6 +188,7 @@ body{
 .edu{ display:flex; flex-direction:column; gap:12px; }
 .edu__title{ font-weight: 650; }
 .muted{ color: var(--muted); }
+.hint{ margin-top:12px; font-size:12px; color: rgba(255,255,255,.55); }
 
 .project{
   border-radius: 18px;
@@ -245,149 +236,56 @@ body{
   .btn,.icon-btn{ transition:none; }
 }
 
-/* ===== Top-right Windows-like Calendar (EN) ===== */
-.cal{
-  position: fixed;
-  top: 18px;
-  right: 18px;
-  width: 340px;
-  padding: 14px 14px 12px;
-  border-radius: 22px;
-  background: rgba(12, 12, 16, .62);
-  border: 1px solid rgba(255,255,255,.14);
-  box-shadow: 0 18px 60px rgba(0,0,0,.55);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  z-index: 2147483647;
-  color: rgba(255,255,255,.92);
-  user-select: none;
+/* ============================================================
+   Resume section: subtle multi-color typography (NOT calendar)
+   Only affects .page area
+   ============================================================ */
+.page .panel{
+  --sec: rgba(210,210,210,.9); /* fallback */
 }
 
-.cal__top{
-  display:flex;
-  justify-content: space-between;
-  align-items:flex-start;
-  gap: 10px;
+/* Subtle tints per section */
+.page .panel--hero{     --sec: rgb(170, 205, 255); }  /* soft blue */
+.page .panel--edu{      --sec: rgb(145, 225, 200); }  /* mint */
+.page .panel--skills{   --sec: rgb(245, 205, 140); }  /* warm amber */
+.page .panel--projects{ --sec: rgb(205, 170, 255); }  /* soft purple */
+
+/* Titles */
+.page .panel .h2{
+  color: color-mix(in oklab, var(--sec) 72%, rgba(255,255,255,.92) 28%);
+}
+.page .panel .h3{
+  color: color-mix(in oklab, var(--sec) 48%, rgba(255,255,255,.70) 52%);
 }
 
-.cal__time{
-  font-size: 28px;
-  font-weight: 750;
-  letter-spacing: .2px;
-  line-height: 1.1;
+/* Subtitles/body */
+.page .panel .muted{
+  color: color-mix(in oklab, var(--sec) 28%, rgba(255,255,255,.70) 72%);
+}
+.page .panel .hero__subtitle{
+  color: color-mix(in oklab, var(--sec) 26%, rgba(255,255,255,.72) 74%);
+}
+.page .panel .hero__summary,
+.page .panel .ul{
+  color: color-mix(in oklab, var(--sec) 18%, rgba(255,255,255,.86) 82%);
 }
 
-.cal__date{
-  margin-top: 4px;
-  color: rgba(255,255,255,.78);
-  font-size: 14px;
+/* Chips slightly tinted */
+.page .panel .chip,
+.page .panel .meta-chip{
+  color: color-mix(in oklab, var(--sec) 35%, rgba(255,255,255,.82) 65%);
+  border-color: color-mix(in oklab, var(--sec) 42%, rgba(255,255,255,.16) 58%);
 }
 
-.cal__sub{
-  margin-top: 2px;
-  color: rgba(255,255,255,.55);
-  font-size: 12px;
+/* List bullet markers */
+.page .panel .ul li::marker{
+  color: color-mix(in oklab, var(--sec) 70%, rgba(255,255,255,.45) 30%);
 }
 
-.cal__nav{
-  display:flex;
-  gap: 8px;
+/* Projects section accent */
+.page .panel--projects .project__title{
+  color: color-mix(in oklab, var(--sec) 62%, rgba(255,255,255,.92) 38%);
 }
-
-.cal__btn{
-  width: 38px;
-  height: 38px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(0,0,0,.18);
-  color: rgba(255,255,255,.9);
-  cursor: pointer;
-  font-size: 22px;
-  line-height: 38px;
-  transition: transform .12s ease, background .12s ease, border-color .12s ease;
-}
-.cal__btn:hover{
-  transform: translateY(-1px);
-  background: rgba(0,0,0,.28);
-  border-color: color-mix(in oklab, var(--accent) 65%, rgba(255,255,255,.2));
-}
-
-.cal__monthRow{
-  margin-top: 10px;
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-}
-
-.cal__month{
-  font-size: 15px;
-  font-weight: 650;
-  color: rgba(255,255,255,.85);
-}
-
-.cal__today{
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(0,0,0,.16);
-  color: rgba(255,255,255,.85);
-  cursor: pointer;
-}
-.cal__today:hover{
-  border-color: color-mix(in oklab, var(--accent) 65%, rgba(255,255,255,.2));
-}
-
-.cal__dow{
-  margin-top: 10px;
-  display:grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  color: rgba(255,255,255,.55);
-  font-size: 12px;
-  text-align:center;
-}
-
-.cal__grid{
-  margin-top: 8px;
-  display:grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-}
-
-.cal__cell{
-  height: 38px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.12);
-  color: rgba(255,255,255,.88);
-  cursor: pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size: 13px;
-  transition: transform .12s ease, background .12s ease, border-color .12s ease;
-}
-
-.cal__cell:hover{
-  transform: translateY(-1px);
-  background: rgba(0,0,0,.22);
-  border-color: rgba(255,255,255,.18);
-}
-
-.cal__cell.is-other{
-  opacity: .45;
-}
-
-.cal__cell.is-today{
-  border-color: color-mix(in oklab, var(--accent) 75%, rgba(255,255,255,.18));
-  background: color-mix(in oklab, var(--accent) 30%, rgba(0,0,0,.25));
-}
-
-.cal__cell.is-selected{
-  outline: 2px solid rgba(255,255,255,.26);
-  outline-offset: 0;
-}
-
-@media (max-width: 520px){
-  .cal{ width: 300px; right: 10px; top: 10px; }
+.page .panel--projects .project__time{
+  color: color-mix(in oklab, var(--sec) 35%, rgba(255,255,255,.62) 65%);
 }
