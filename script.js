@@ -1,298 +1,254 @@
-// script.js
+// =========================
+// Footer year
+// =========================
+(function initYear(){
+  const y = document.getElementById("year");
+  if (y) y.textContent = new Date().getFullYear();
+})();
 
-// ============================
-// A) Background slider
-// ============================
-const sliderData = [
-  { url: './images/qishen.jpg', title: 'Come on, Traveler—take a break with me for a while...', color: 'rgb(181, 192, 184)' },
-  { url: './images/wendi.jpg', title: 'The wind will carry away your worries—and bring new stories and adventures.', color: 'rgb(62, 150, 126)' },
-  { url: './images/keqing.jpg', title: 'My blade is like lightning—cutting through all that is impure!', color: 'rgb(90, 78, 116)' },
-  { url: './images/zhongli.jpg', title: 'If only we could buy osmanthus wine and share it again… when will we meet once more?', color: 'rgb(210, 158, 78)' },
-  { url: './images/ganyu.jpg', title: 'Ah… the scent of Glaze Lilies. So soothing.', color: 'rgb(96, 111, 191)' },
-  { url: './images/leidian.jpg', title: 'The scenery remains for millennia, yet human life is but dew and bubbles.', color: 'rgb(153, 119, 217)' },
-  { url: './images/shenzi.jpg', title: 'My god… I entrust them to you.', color: 'rgb(185, 95, 84)' },
-  { url: './images/naxida.jpg', title: 'Do you believe the Dendro Archon exists? I’ve seen her in my dreams.', color: 'rgb(130, 148, 124)' },
-  { url: './images/nilu.jpg', title: 'Graceful as a lotus bloom—pure and untouched.', color: 'rgb(33, 166, 218)' },
-  { url: './images/funingna.jpg', title: 'Rain never ceases; rivers keep flowing!', color: 'rgb(136, 151, 184)' },
-  { url: './images/naweiya.jpg', title: 'Isn’t a secret shared with friends even more precious?', color: 'rgb(202, 159, 116)' }
-];
+// =========================
+// Reveal on scroll
+// =========================
+(function initReveal(){
+  const els = Array.from(document.querySelectorAll(".reveal"));
+  if (!els.length) return;
 
-const bgImg = document.getElementById('bgImg');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) e.target.classList.add("is-in");
+    }
+  }, { threshold: 0.12 });
 
-let i = 0;
-let timer = null;
+  els.forEach(el => io.observe(el));
+})();
 
-function normIndex(index) {
-  const n = sliderData.length;
-  return ((index % n) + n) % n;
-}
-function setAccent(color) {
-  document.documentElement.style.setProperty('--accent', color);
-}
+// =========================
+// Background slider
+// =========================
+(function initBackgroundSlider(){
+  const imgEl = document.getElementById("bgImg");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  if (!imgEl) return;
 
-function renderBg(index) {
-  const item = sliderData[normIndex(index)];
-  if (!bgImg) return;
+  // 你把这里换成你 images 文件夹里真实存在的图片即可
+  const BG_IMAGES = [
+    "./images/qishen.jpg",
+    // "./images/xxx.jpg",
+    // "./images/yyy.jpg",
+  ];
 
-  bgImg.style.opacity = '0';
-  setTimeout(() => {
-    bgImg.src = item.url;
+  let idx = Math.max(0, BG_IMAGES.indexOf(imgEl.getAttribute("src")));
+  if (idx < 0) idx = 0;
 
-    // avoid caching issues when you replace images with same filename:
-    // bgImg.src = `${item.url}?v=${Date.now()}`;
+  function setBg(newIdx){
+    if (!BG_IMAGES.length) return;
+    idx = (newIdx + BG_IMAGES.length) % BG_IMAGES.length;
 
-    bgImg.onload = () => {
-      bgImg.style.opacity = '1';
-      bgImg.style.transform = 'scale(1.06)';
-      setTimeout(() => (bgImg.style.transform = 'scale(1.04)'), 600);
-    };
-  }, 120);
-
-  setAccent(item.color);
-}
-
-function startBgTimer() {
-  if (timer) clearInterval(timer);
-  timer = setInterval(() => {
-    i += 1;
-    renderBg(i);
-  }, 3500);
-}
-
-prevBtn?.addEventListener('click', () => { i -= 1; renderBg(i); startBgTimer(); });
-nextBtn?.addEventListener('click', () => { i += 1; renderBg(i); startBgTimer(); });
-
-// init bg
-renderBg(0);
-startBgTimer();
-
-
-// ============================
-// B) Resume JSON -> bind to existing layout
-// ============================
-const yearEl = document.getElementById('year');
-if (yearEl) yearEl.textContent = new Date().getFullYear();
-
-function chip(text) {
-  const s = document.createElement('span');
-  s.className = 'chip';
-  s.textContent = text;
-  return s;
-}
-
-function renderEducation(list) {
-  const eduList = document.getElementById('eduList');
-  if (!eduList) return;
-  eduList.innerHTML = '';
-
-  (list || []).forEach((e) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'edu__item';
-
-    const title = document.createElement('div');
-    title.className = 'edu__title';
-    title.textContent = e.school || '';
-
-    const muted = document.createElement('div');
-    muted.className = 'muted';
-    // keep your original style: one line under school
-    const parts = [e.degree, e.dates].filter(Boolean).join(' • ');
-    muted.textContent = parts;
-
-    wrap.appendChild(title);
-    wrap.appendChild(muted);
-    eduList.appendChild(wrap);
-  });
-}
-
-function renderSkills(skills) {
-  const langs = document.getElementById('skillsLanguages');
-  const frms  = document.getElementById('skillsFrameworks');
-  const tools = document.getElementById('skillsTools');
-
-  if (langs) { langs.innerHTML = ''; (skills?.languages || []).forEach(x => langs.appendChild(chip(x))); }
-  if (frms)  { frms.innerHTML  = ''; (skills?.frameworks || []).forEach(x => frms.appendChild(chip(x))); }
-  if (tools) { tools.innerHTML = ''; (skills?.tools || []).forEach(x => tools.appendChild(chip(x))); }
-}
-
-function renderProjects(projects) {
-  const box = document.getElementById('projectsList');
-  if (!box) return;
-  box.innerHTML = '';
-
-  (projects || []).forEach((p) => {
-    const article = document.createElement('article');
-    article.className = 'project';
-
-    const head = document.createElement('div');
-    head.className = 'project__head';
-
-    const t = document.createElement('div');
-    t.className = 'project__title';
-    t.textContent = p.name || '';
-
-    const time = document.createElement('div');
-    time.className = 'project__time';
-    time.textContent = p.dates || '';
-
-    head.appendChild(t);
-    head.appendChild(time);
-
-    const ul = document.createElement('ul');
-    ul.className = 'ul';
-    (p.bullets || []).forEach((b) => {
-      const li = document.createElement('li');
-      li.textContent = b;
-      ul.appendChild(li);
-    });
-
-    article.appendChild(head);
-    article.appendChild(ul);
-    box.appendChild(article);
-  });
-}
-
-function applyResume(data) {
-  // Basics
-  const nameEl = document.getElementById('nameEl');
-  const titleEl = document.getElementById('titleEl');
-  const phoneEl = document.getElementById('phoneEl');
-  const locationEl = document.getElementById('locationEl');
-  const emailTextEl = document.getElementById('emailTextEl');
-  const summaryEl = document.getElementById('summaryEl');
-
-  const githubLink = document.getElementById('githubLink');
-  const linkedinLink = document.getElementById('linkedinLink');
-  const emailLink = document.getElementById('emailLink');
-
-  if (nameEl && data?.basics?.name) nameEl.textContent = data.basics.name;
-  if (titleEl && data?.basics?.title) titleEl.textContent = data.basics.title;
-  if (phoneEl && data?.basics?.phone) phoneEl.textContent = data.basics.phone;
-  if (locationEl && data?.basics?.location) locationEl.textContent = data.basics.location;
-  if (emailTextEl && data?.basics?.email) emailTextEl.textContent = data.basics.email;
-  if (summaryEl && data?.summary) summaryEl.textContent = data.summary;
-
-  if (githubLink && data?.basics?.github) githubLink.href = data.basics.github;
-  if (linkedinLink && data?.basics?.linkedin) linkedinLink.href = data.basics.linkedin;
-  if (emailLink && data?.basics?.email) emailLink.href = `mailto:${data.basics.email}`;
-
-  // Sections
-  renderEducation(data?.education || []);
-  renderSkills(data?.skills || {});
-  renderProjects(data?.projects || []);
-}
-
-async function loadResumeJson() {
-  try {
-    // no-store avoids the "I updated json but page didn't change" cache issue
-    const res = await fetch('./resume.json', { cache: 'no-store' });
-    if (!res.ok) throw new Error(`resume.json fetch failed: ${res.status}`);
-    const data = await res.json();
-    applyResume(data);
-  } catch (e) {
-    console.warn('resume.json not loaded, using hardcoded HTML:', e);
+    imgEl.style.opacity = "0";
+    setTimeout(() => {
+      imgEl.src = BG_IMAGES[idx];
+      imgEl.onload = () => {
+        imgEl.style.opacity = "1";
+      };
+      // 如果缓存直接命中 onload 不触发，兜底一下
+      setTimeout(() => { imgEl.style.opacity = "1"; }, 120);
+    }, 120);
   }
-}
 
-loadResumeJson();
+  if (prevBtn) prevBtn.addEventListener("click", () => setBg(idx - 1));
+  if (nextBtn) nextBtn.addEventListener("click", () => setBg(idx + 1));
+})();
 
+// =========================
+// Calendar (Mon-start)
+// =========================
+(function initCalendar(){
+  const timeEl = document.getElementById("calTime");
+  const dateEl = document.getElementById("calDate");
+  const subEl  = document.getElementById("calSub");
+  const monthEl = document.getElementById("calMonth");
+  const gridEl = document.getElementById("calGrid");
+  const prevBtn = document.getElementById("calPrev");
+  const nextBtn = document.getElementById("calNext");
+  const todayBtn = document.getElementById("calToday");
 
-// ============================
-// C) Calendar widget (Top-right)
-// ============================
-const calTime = document.getElementById('calTime');
-const calDate = document.getElementById('calDate');
-const calSub  = document.getElementById('calSub');
-const calMonth = document.getElementById('calMonth');
-const calGrid = document.getElementById('calGrid');
-const calPrev = document.getElementById('calPrev');
-const calNext = document.getElementById('calNext');
-const calTodayBtn = document.getElementById('calToday');
+  if (!timeEl || !dateEl || !monthEl || !gridEl) return;
 
-function pad2(n){ return String(n).padStart(2, '0'); }
-function sameDay(a, b){
-  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
-}
+  // remove sub line content
+  if (subEl) subEl.textContent = "";
 
-let calView = new Date(); calView.setDate(1);
-let calSelected = new Date();
-
-function updateCalHeader(){
-  if (!calTime || !calDate) return;
   const now = new Date();
-  calTime.textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
-  calDate.textContent = new Intl.DateTimeFormat('en-US', {
-    weekday: 'short', month: 'short', day: '2-digit', year: 'numeric'
-  }).format(now);
-}
+  let viewYear = now.getFullYear();
+  let viewMonth = now.getMonth(); // 0-11
+  let selected = null; // {y,m,d}
 
-function renderCalendar(){
-  if (!calMonth || !calGrid) return;
+  const fmtTime = new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false
+  });
+  const fmtDate = new Intl.DateTimeFormat(undefined, {
+    weekday: "short", month: "short", day: "2-digit", year: "numeric"
+  });
+  const fmtMonth = new Intl.DateTimeFormat(undefined, {
+    month: "long", year: "numeric"
+  });
 
-  const y = calView.getFullYear();
-  const m = calView.getMonth();
-
-  calMonth.textContent = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' })
-    .format(new Date(y, m, 1));
-
-  calGrid.innerHTML = '';
-
-  const first = new Date(y, m, 1);
-  const shift = (first.getDay() + 6) % 7; // Monday=0
-  const start = new Date(y, m, 1 - shift);
-  const today = new Date();
-
-  for (let k = 0; k < 42; k++){
-    const d = new Date(start);
-    d.setDate(start.getDate() + k);
-
-    const btn = document.createElement('button');
-    btn.className = 'cal__cell';
-    btn.type = 'button';
-    btn.textContent = d.getDate();
-
-    if (d.getMonth() !== m) btn.classList.add('is-other');
-    if (sameDay(d, today)) btn.classList.add('is-today');
-    if (sameDay(d, calSelected)) btn.classList.add('is-selected');
-
-    btn.addEventListener('click', () => {
-      calSelected = d;
-      renderCalendar();
-    });
-
-    calGrid.appendChild(btn);
+  function tick(){
+    const d = new Date();
+    timeEl.textContent = fmtTime.format(d);
+    dateEl.textContent = fmtDate.format(d);
   }
-}
+  tick();
+  setInterval(tick, 1000);
 
-calPrev?.addEventListener('click', () => {
-  calView = new Date(calView.getFullYear(), calView.getMonth()-1, 1);
-  renderCalendar();
-});
-calNext?.addEventListener('click', () => {
-  calView = new Date(calView.getFullYear(), calView.getMonth()+1, 1);
-  renderCalendar();
-});
-calTodayBtn?.addEventListener('click', () => {
-  const t = new Date();
-  calSelected = t;
-  calView = new Date(t.getFullYear(), t.getMonth(), 1);
-  renderCalendar();
-});
-
-updateCalHeader();
-renderCalendar();
-setInterval(updateCalHeader, 250);
-
-
-// ============================
-// D) Reveal on scroll
-// ============================
-const io = new IntersectionObserver((entries) => {
-  for (const e of entries) {
-    if (e.isIntersecting) e.target.classList.add('is-in');
+  function daysInMonth(y, m){
+    return new Date(y, m + 1, 0).getDate();
   }
-}, { threshold: 0.08 });
 
-document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  // JS getDay(): Sun=0..Sat=6
+  // We want Mon=0..Sun=6
+  function monStartIndex(y, m, day){
+    const js = new Date(y, m, day).getDay();
+    return (js + 6) % 7;
+  }
+
+  function isSame(a, b){
+    return a && b && a.y === b.y && a.m === b.m && a.d === b.d;
+  }
+
+  function render(){
+    monthEl.textContent = fmtMonth.format(new Date(viewYear, viewMonth, 1));
+    gridEl.innerHTML = "";
+
+    const today = new Date();
+    const todayKey = { y: today.getFullYear(), m: today.getMonth(), d: today.getDate() };
+
+    const firstIdx = monStartIndex(viewYear, viewMonth, 1);
+    const dim = daysInMonth(viewYear, viewMonth);
+
+    // previous month days to fill
+    const prevMonth = viewMonth === 0 ? 11 : viewMonth - 1;
+    const prevYear = viewMonth === 0 ? viewYear - 1 : viewYear;
+    const dimPrev = daysInMonth(prevYear, prevMonth);
+
+    // 6 rows * 7 = 42 cells
+    for (let i = 0; i < 42; i++){
+      const cell = document.createElement("button");
+      cell.className = "cal__cell";
+      cell.type = "button";
+
+      let y = viewYear, m = viewMonth, d = 1;
+
+      if (i < firstIdx){
+        // previous month
+        d = dimPrev - (firstIdx - 1 - i);
+        y = prevYear;
+        m = prevMonth;
+        cell.classList.add("is-other");
+      } else if (i >= firstIdx + dim){
+        // next month
+        d = i - (firstIdx + dim) + 1;
+        y = viewMonth === 11 ? viewYear + 1 : viewYear;
+        m = viewMonth === 11 ? 0 : viewMonth + 1;
+        cell.classList.add("is-other");
+      } else {
+        d = i - firstIdx + 1;
+      }
+
+      const key = { y, m, d };
+      cell.textContent = String(d);
+
+      if (isSame(key, todayKey)) cell.classList.add("is-today");
+      if (isSame(key, selected)) cell.classList.add("is-selected");
+
+      cell.addEventListener("click", () => {
+        selected = key;
+        render();
+      });
+
+      gridEl.appendChild(cell);
+    }
+  }
+
+  function goPrev(){
+    if (viewMonth === 0){ viewMonth = 11; viewYear--; }
+    else viewMonth--;
+    render();
+  }
+
+  function goNext(){
+    if (viewMonth === 11){ viewMonth = 0; viewYear++; }
+    else viewMonth++;
+    render();
+  }
+
+  function goToday(){
+    const t = new Date();
+    viewYear = t.getFullYear();
+    viewMonth = t.getMonth();
+    selected = { y: viewYear, m: viewMonth, d: t.getDate() };
+    render();
+  }
+
+  if (prevBtn) prevBtn.addEventListener("click", goPrev);
+  if (nextBtn) nextBtn.addEventListener("click", goNext);
+  if (todayBtn) todayBtn.addEventListener("click", goToday);
+
+  render();
+})();
+
+// =========================
+// Projects carousel
+// =========================
+(function initProjectsCarousel(){
+  const wrap = document.getElementById("projCarousel");
+  if (!wrap) return;
+
+  const items = Array.from(wrap.querySelectorAll(".projItem"));
+  const prevBtn = document.getElementById("projPrev");
+  const nextBtn = document.getElementById("projNext");
+  const counter = document.getElementById("projCounter");
+
+  if (!items.length){
+    if (prevBtn) prevBtn.style.display = "none";
+    if (nextBtn) nextBtn.style.display = "none";
+    if (counter) counter.style.display = "none";
+    return;
+  }
+
+  let idx = 0;
+
+  function render(){
+    items.forEach((el, i) => el.classList.toggle("is-active", i === idx));
+    if (counter) counter.textContent = `${idx + 1} / ${items.length}`;
+
+    const hideNav = items.length <= 1;
+    if (prevBtn) prevBtn.style.display = hideNav ? "none" : "";
+    if (nextBtn) nextBtn.style.display = hideNav ? "none" : "";
+    if (counter) counter.style.display = hideNav ? "none" : "";
+  }
+
+  function prev(){
+    idx = (idx - 1 + items.length) % items.length;
+    render();
+  }
+
+  function next(){
+    idx = (idx + 1) % items.length;
+    render();
+  }
+
+  if (prevBtn) prevBtn.addEventListener("click", prev);
+  if (nextBtn) nextBtn.addEventListener("click", next);
+
+  // Optional: keyboard arrow navigation
+  window.addEventListener("keydown", (e) => {
+    const tag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea") return;
+    if (e.key === "ArrowLeft") prev();
+    if (e.key === "ArrowRight") next();
+  });
+
+  render();
+})();
