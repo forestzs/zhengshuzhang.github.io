@@ -6,9 +6,6 @@ const bgCaption = document.getElementById('bgCaption');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 
-const bgClock = document.getElementById('bgClock');
-const clockText = document.getElementById('clockText');
-
 const yearEl = document.getElementById('year');
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
@@ -67,18 +64,6 @@ nextBtn?.addEventListener('click', () => {
 // Pause on hover background (optional)
 bgImg?.addEventListener('mouseenter', () => timer && clearInterval(timer));
 bgImg?.addEventListener('mouseleave', startTimer);
-
-// Small clock (EN)
-function updateSmallClock() {
-  if (!clockText) return;
-  const d = new Date();
-  const day = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d);
-  const time = new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(d);
-  const date = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
-  clockText.innerHTML = `${day}<br>${time}<br>${date}`;
-}
-setInterval(updateSmallClock, 250);
-updateSmallClock();
 
 // Reveal on scroll
 const io = new IntersectionObserver((entries) => {
