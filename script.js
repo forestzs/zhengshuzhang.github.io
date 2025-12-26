@@ -29,7 +29,63 @@
   const bgPrevBtn = $("bgPrevBtn");
   const bgNextBtn = $("bgNextBtn");
 
-  // ✅ 改成你仓库 images/ 里真实存在的文件名
+  // ===== Resume button accent follows background image =====
+const resumeBtn = document.querySelector(".btn--primary");
+
+function averageColorFromImage(imgEl) {
+  const w = 48, h = 48;
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+  ctx.drawImage(imgEl, 0, 0, w, h);
+  const data = ctx.getImageData(0, 0, w, h).data;
+
+  let r = 0, g = 0, b = 0, cnt = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const a = data[i + 3];
+    if (a < 20) continue;
+
+    const rr = data[i], gg = data[i + 1], bb = data[i + 2];
+    const bright = (rr + gg + bb) / 3;
+
+    // ignore near-white & near-black pixels
+    if (bright > 240 || bright < 15) continue;
+
+    r += rr; g += gg; b += bb; cnt++;
+  }
+
+  if (!cnt) {
+    r = g = b = 0; cnt = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i]; g += data[i + 1]; b += data[i + 2];
+      cnt++;
+    }
+  }
+
+  return { r: Math.round(r / cnt), g: Math.round(g / cnt), b: Math.round(b / cnt) };
+}
+
+function updateResumeAccent() {
+  if (!bgImg || !resumeBtn) return;
+  try {
+    const { r, g, b } = averageColorFromImage(bgImg);
+    resumeBtn.style.background = `rgba(${r}, ${g}, ${b}, 0.40)`;
+    resumeBtn.style.borderColor = `rgba(${r}, ${g}, ${b}, 0.70)`;
+    resumeBtn.style.boxShadow = `0 10px 30px rgba(${r}, ${g}, ${b}, 0.18)`;
+  } catch (e) {
+    console.warn("[accent] failed:", e);
+  }
+}
+
+// update when image finishes loading (works for auto + click switch)
+if (bgImg) {
+  bgImg.addEventListener("load", updateResumeAccent);
+  if (bgImg.complete) setTimeout(updateResumeAccent, 0);
+}
+
   const rawImages = [
     "./images/qishen.jpg",
     "./images/funingna.jpg",
