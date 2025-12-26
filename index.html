@@ -15,10 +15,10 @@
     <div class="bg__vignette"></div>
   </div>
 
-  <!-- Fixed bottom-right slider controls (OUTSIDE .bg) -->
+  <!-- ✅ Fixed bottom-right slider controls (unique IDs) -->
   <div class="bg__controlsFixed" aria-label="Background controls">
-    <button class="icon-btn" id="prevBtn" type="button" aria-label="Previous background">‹</button>
-    <button class="icon-btn" id="nextBtn" type="button" aria-label="Next background">›</button>
+    <button class="icon-btn" id="bgPrevBtn" type="button" aria-label="Previous background">‹</button>
+    <button class="icon-btn" id="bgNextBtn" type="button" aria-label="Next background">›</button>
   </div>
 
   <!-- Top-right Calendar Widget (EN) -->
@@ -27,7 +27,7 @@
       <div>
         <div class="cal__time" id="calTime">--:--:--</div>
         <div class="cal__date" id="calDate">---, --- --, ----</div>
-        <div class="cal__sub" id="calSub"></div>
+        <div class="cal__sub" id="calSub">Local time • Click a date to select</div>
       </div>
 
       <div class="cal__nav">
@@ -62,7 +62,6 @@
         <div class="hero__links">
           <a class="btn" href="https://github.com/forestzs" target="_blank" rel="noreferrer">GitHub</a>
           <a class="btn" href="https://www.linkedin.com/in/zhengshuzhang/" target="_blank" rel="noreferrer">LinkedIn</a>
-          <!-- Email removed -->
           <a class="btn btn--primary" href="./resume.pdf" target="_blank" rel="noreferrer">Resume</a>
         </div>
       </div>
@@ -88,15 +87,14 @@
             <div class="edu__title">University of Southern California</div>
             <div class="muted">Master of Science in Spatial Data Science</div>
 
-            <div class="edu__courses">
-              <div class="edu__coursesTitle">Related Courses</div>
-              <div class="chips chips--tight">
-                <span class="chip chip--sm">Spatial Data Science</span>
-                <span class="chip chip--sm">Intro to Computational Thinking</span>
-                <span class="chip chip--sm">GIS Programming</span>
-                <span class="chip chip--sm">Programming for Data Science</span>
-                <span class="chip chip--sm">Data Science at Scale</span>
-              </div>
+            <div class="edu__divider"></div>
+            <div class="edu__label">Related Courses</div>
+            <div class="chips">
+              <span class="chip">Spatial Data Science</span>
+              <span class="chip">Intro to Computational Thinking</span>
+              <span class="chip">GIS Programming</span>
+              <span class="chip">Programming for Data Science</span>
+              <span class="chip">Data Science at Scale</span>
             </div>
           </div>
 
@@ -104,12 +102,11 @@
             <div class="edu__title">Sichuan Agricultural University</div>
             <div class="muted">Bachelor of Engineering in Food Quality and Safety</div>
 
-            <div class="edu__courses">
-              <div class="edu__coursesTitle">Related Courses</div>
-              <div class="chips chips--tight">
-                <span class="chip chip--sm">C Programming</span>
-                <span class="chip chip--sm">Intro to Information Science &amp; Technology</span>
-              </div>
+            <div class="edu__divider"></div>
+            <div class="edu__label">Related Courses</div>
+            <div class="chips">
+              <span class="chip">C Programming</span>
+              <span class="chip">Intro to Information Science &amp; Technology</span>
             </div>
           </div>
         </div>
@@ -141,67 +138,23 @@
       </section>
     </section>
 
-    <!-- Projects: single card + left/right nav -->
+    <!-- ✅ Projects: single card + left/right buttons -->
     <section class="panel reveal panel--projects">
-      <div class="sectionHead">
+      <div class="projects__head">
         <h2 class="h2">Projects</h2>
-
-        <div class="projNav" aria-label="Project carousel controls">
-          <button class="icon-btn icon-btn--sm" id="projPrev" type="button" aria-label="Previous project">‹</button>
-          <div class="projCounter" id="projCounter" aria-live="polite">1 / 4</div>
-          <button class="icon-btn icon-btn--sm" id="projNext" type="button" aria-label="Next project">›</button>
+        <div class="projects__nav">
+          <button class="proj-btn" id="projPrevBtn" type="button" aria-label="Previous project">‹</button>
+          <button class="proj-btn" id="projNextBtn" type="button" aria-label="Next project">›</button>
         </div>
       </div>
 
-      <div class="projCarousel" id="projCarousel">
-        <article class="project projItem">
-          <div class="project__head">
-            <div class="project__title">Twitch Game Web App</div>
-            <div class="project__time">May 2025 – Jun 2025</div>
-          </div>
-          <ul class="ul">
-            <li>Full-stack game streaming web; browse 1000+ Twitch streams/videos/clips via Twitch APIs.</li>
-            <li>Spring Security + MySQL auth with role-based access.</li>
-            <li>50+ JUnit tests; 90%+ coverage; deployed on AWS App Runner + Aurora RDS + ECR.</li>
-          </ul>
-        </article>
-
-        <article class="project projItem">
-          <div class="project__head">
-            <div class="project__title">Food Management &amp; Ordering Web App</div>
-            <div class="project__time">Jul 2024 – Aug 2024</div>
-          </div>
-          <ul class="ul">
-            <li>Spring Boot backend with auth/RBAC + real-time order status.</li>
-            <li>Vue.js admin frontend; clear API contracts for smoother integration.</li>
-            <li>Redis caching + MySQL: reduced DB load ~40%; latency 800ms → 480ms.</li>
-          </ul>
-        </article>
-
-        <article class="project projItem">
-          <div class="project__head">
-            <div class="project__title">BookingHouse Web App</div>
-            <div class="project__time">Jul 2025 – Aug 2025</div>
-          </div>
-          <ul class="ul">
-            <li>Spring Boot + PostgreSQL + Hibernate Spatial for radius-based geo search over 10,000+ records (sub-200ms).</li>
-            <li>React + Ant Design frontend with validation + async flows; RESTful integration via Fetch.</li>
-            <li>JWT stateless auth + booking conflict checks + transaction-safe updates.</li>
-          </ul>
-        </article>
-
-        <article class="project projItem">
-          <div class="project__head">
-            <div class="project__title">EasyAI Web App</div>
-            <div class="project__time">Jun 2025 – Jul 2025</div>
-          </div>
-          <ul class="ul">
-            <li>Java + LangChain RAG assistant on PDFs up to 50MB.</li>
-            <li>Vector indexing pipeline; 90% responses under 2s while keeping relevance.</li>
-            <li>Routing/caching reduced API latency ~40% during peaks; supports voice queries &amp; history.</li>
-          </ul>
-        </article>
-      </div>
+      <article class="project" id="projectCard">
+        <div class="project__head">
+          <div class="project__title" id="projTitle">—</div>
+          <div class="project__time" id="projTime">—</div>
+        </div>
+        <ul class="ul" id="projBullets"></ul>
+      </article>
     </section>
 
     <footer class="footer reveal">
