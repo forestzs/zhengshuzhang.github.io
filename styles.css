@@ -42,10 +42,11 @@ body{
   background:
     radial-gradient(80% 60% at 30% 10%, rgba(255,255,255,.08), rgba(0,0,0,0) 60%),
     linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.55) 55%, rgba(0,0,0,.72));
+  pointer-events: none;
 }
 
 .bg__hud{
-  position:absolute;
+  position: fixed;        
   left:24px;
   right:24px;
   bottom:20px;
@@ -54,6 +55,7 @@ body{
   justify-content:space-between;
   gap:16px;
   pointer-events:auto;
+  z-index: 9999;         
 }
 
 .bg__caption{
@@ -108,6 +110,10 @@ body{
   transform: translateY(-1px);
   border-color: color-mix(in oklab, var(--accent) 70%, rgba(255,255,255,.2));
   background: rgba(0,0,0,.28);
+}
+
+.bg__controls, .bg__controls *{
+  pointer-events: auto;
 }
 
 /* ===== Foreground layout ===== */
