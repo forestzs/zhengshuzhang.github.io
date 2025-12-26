@@ -1,8 +1,22 @@
 // script.js
 
 // ===== Background Slider Data (EN captions) =====
-const bgImg = document.querySelector('.bg__img');
-const bgCaption = document.getElementById('bgCaption');
+// (captions kept for future use; we do NOT render captions on page now)
+const sliderData = [
+  { url: './images/qishen.jpg', title: 'Traveler—come on, take a break with me...', color: 'rgb(181, 192, 184)' },
+  { url: './images/wendi.jpg', title: 'The wind will carry away your worries—and bring new stories and adventures~', color: 'rgb(62, 150, 126)' },
+  { url: './images/keqing.jpg', title: 'My blade is like lightning—cutting through all that stands in the way!', color: 'rgb(90, 78, 116)' },
+  { url: './images/zhongli.jpg', title: 'If only we could drink again beneath the osmanthus... when will old friends meet once more?', color: 'rgb(210, 158, 78)' },
+  { url: './images/ganyu.jpg', title: 'Ah, the scent of Glaze Lilies… wonderful.', color: 'rgb(96, 111, 191)' },
+  { url: './images/leidian.jpg', title: 'The world remains for ages, yet a human life is but dew and a fleeting shadow.', color: 'rgb(153, 119, 217)' },
+  { url: './images/shenzi.jpg', title: 'My god… I’ll leave everything to you!', color: 'rgb(185, 95, 84)' },
+  { url: './images/naxida.jpg', title: 'Do you believe the Dendro Archon exists? I’ve seen her in my dreams.', color: 'rgb(130, 148, 124)' },
+  { url: './images/nilu.jpg', title: 'Graceful steps—like a lotus in bloom, pure and untouched~', color: 'rgb(33, 166, 218)' },
+  { url: './images/funingna.jpg', title: 'Rain never ceases; a hundred rivers surge onward!', color: 'rgb(136, 151, 184)' },
+  { url: './images/naweiya.jpg', title: 'Isn’t a secret shared with friends all the more precious?', color: 'rgb(202, 159, 116)' }
+];
+
+const bgImg = document.getElementById('bgImg');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 
@@ -25,8 +39,7 @@ function render(index) {
   const idx = normIndex(index);
   const item = sliderData[idx];
 
-  if (bgClock) bgClock.style.display = 'block';
-
+  // cross-fade image
   bgImg.style.opacity = '0';
   setTimeout(() => {
     bgImg.src = item.url;
@@ -37,7 +50,6 @@ function render(index) {
     };
   }, 120);
 
-  bgCaption.textContent = item.title;
   setAccent(item.color);
 }
 
@@ -93,30 +105,26 @@ function sameDay(a, b){
   return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
 }
 
-// current view month
 let calView = new Date();
 calView.setDate(1);
 
-// selected day
 let calSelected = new Date();
 
 function updateCalHeader(){
   const now = new Date();
-
-  // Time with seconds (24h-like but using leading zeros)
-  calTime.textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
-
-  // Date line: Thu, Dec 25, 2025
-  calDate.textContent = new Intl.DateTimeFormat('en-US', {
+  if (calTime) calTime.textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+  if (calDate) calDate.textContent = new Intl.DateTimeFormat('en-US', {
     weekday: 'short', month: 'short', day: '2-digit', year: 'numeric'
   }).format(now);
+  if (calSub) calSub.textContent = 'Local time • Click a date to select';
 }
 
 function renderCalendar(){
+  if (!calMonth || !calGrid) return;
+
   const y = calView.getFullYear();
   const m = calView.getMonth();
 
-  // Month line: December 2025
   calMonth.textContent = new Intl.DateTimeFormat('en-US', {
     month: 'long', year: 'numeric'
   }).format(new Date(y, m, 1));
@@ -124,8 +132,6 @@ function renderCalendar(){
   calGrid.innerHTML = '';
 
   const first = new Date(y, m, 1);
-
-  // Monday-based week grid
   const shift = (first.getDay() + 6) % 7; // Mon=0
   const start = new Date(y, m, 1 - shift);
   const today = new Date();
@@ -169,7 +175,6 @@ calTodayBtn?.addEventListener('click', () => {
   renderCalendar();
 });
 
-// init calendar
 updateCalHeader();
 renderCalendar();
 setInterval(updateCalHeader, 250);
