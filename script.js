@@ -1,18 +1,18 @@
-// ===== Data (from your sliderData) =====
-// You can keep your original list exactly; image paths must exist in /images.
-// Source: your carousel HTML :contentReference[oaicite:11]{index=11}
+// script.js
+
+// ===== Background Slider Data (EN captions) =====
 const sliderData = [
-  { url: './images/qishen.jpg', title: '旅行者，快来啊！一起休息一下吧...', color: 'rgb(181, 192, 184)' },
-  { url: './images/wendi.jpg', title: '风会带走你的忧虑，也会带来新的故事和冒险~', color: 'rgb(62, 150, 126)' },
-  { url: './images/keqing.jpg', title: '剑光如我,斩尽芜杂!', color: 'rgb(90, 78, 116)' },
-  { url: './images/zhongli.jpg', title: '欲买桂花同载酒,只可惜故人何日再见呢？', color: 'rgb(210, 158, 78)' },
-  { url: './images/ganyu.jpg', title: '啊,琉璃百合的味道,真好啊！', color: 'rgb(96, 111, 191)' },
-  { url: './images/leidian.jpg', title: '浮世景色百千年依旧,人之在世却如白露与泡影！', color: 'rgb(153, 119, 217)' },
-  { url: './images/shenzi.jpg', title: '我的神明，就托付给你了！', color: 'rgb(185, 95, 84)' },
-  { url: './images/naxida.jpg', title: '你相信草神的存在吗？我曾在梦中见过她', color: 'rgb(130, 148, 124)' },
-  { url: './images/nilu.jpg', title: '舞姿娉婷，如睡莲初绽，一尘不染~', color: 'rgb(33, 166, 218)' },
-  { url: './images/funingna.jpg', title: '雨露不休，百川奔流!', color: 'rgb(136, 151, 184)' },
-  { url: './images/naweiya.jpg', title: '和朋友分享的秘密不是更加珍贵吗?', color: 'rgb(202, 159, 116)' }
+  { url: './images/qishen.jpg', title: 'Traveler—come on, take a break with me...', color: 'rgb(181, 192, 184)' },
+  { url: './images/wendi.jpg', title: 'The wind will carry away your worries—and bring new stories and adventures~', color: 'rgb(62, 150, 126)' },
+  { url: './images/keqing.jpg', title: 'My blade is like lightning—cutting through all that stands in the way!', color: 'rgb(90, 78, 116)' },
+  { url: './images/zhongli.jpg', title: 'If only we could drink again beneath the osmanthus... when will old friends meet once more?', color: 'rgb(210, 158, 78)' },
+  { url: './images/ganyu.jpg', title: 'Ah, the scent of Glaze Lilies… wonderful.', color: 'rgb(96, 111, 191)' },
+  { url: './images/leidian.jpg', title: 'The world remains for ages, yet a human life is but dew and a fleeting shadow.', color: 'rgb(153, 119, 217)' },
+  { url: './images/shenzi.jpg', title: 'My god… I’ll leave everything to you!', color: 'rgb(185, 95, 84)' },
+  { url: './images/naxida.jpg', title: 'Do you believe the Dendro Archon exists? I’ve seen her in my dreams.', color: 'rgb(130, 148, 124)' },
+  { url: './images/nilu.jpg', title: 'Graceful steps—like a lotus in bloom, pure and untouched~', color: 'rgb(33, 166, 218)' },
+  { url: './images/funingna.jpg', title: 'Rain never ceases; a hundred rivers surge onward!', color: 'rgb(136, 151, 184)' },
+  { url: './images/naweiya.jpg', title: 'Isn’t a secret shared with friends all the more precious?', color: 'rgb(202, 159, 116)' }
 ];
 
 const bgImg = document.querySelector('.bg__img');
@@ -42,23 +42,20 @@ function render(index) {
   const idx = normIndex(index);
   const item = sliderData[idx];
 
-  // Cross-fade image
+  if (bgClock) bgClock.style.display = 'block';
+
   bgImg.style.opacity = '0';
   setTimeout(() => {
     bgImg.src = item.url;
     bgImg.onload = () => {
       bgImg.style.opacity = '1';
-      bgImg.style.transform = 'scale(1.06)'; // subtle living background
+      bgImg.style.transform = 'scale(1.06)';
       setTimeout(() => (bgImg.style.transform = 'scale(1.04)'), 600);
     };
   }, 120);
 
   bgCaption.textContent = item.title;
   setAccent(item.color);
-
-  // Show clock after first slide (same idea as your original code)
-  // Source: original toggles clock display :contentReference[oaicite:12]{index=12}
-  bgClock.style.display = 'block';
 }
 
 function startTimer() {
@@ -69,30 +66,33 @@ function startTimer() {
   }, 3500);
 }
 
-prevBtn.addEventListener('click', () => {
+prevBtn?.addEventListener('click', () => {
   i -= 1;
   render(i);
   startTimer();
 });
 
-nextBtn.addEventListener('click', () => {
+nextBtn?.addEventListener('click', () => {
   i += 1;
   render(i);
   startTimer();
 });
 
 // Pause on hover background (optional)
-bgImg.addEventListener('mouseenter', () => timer && clearInterval(timer));
-bgImg.addEventListener('mouseleave', startTimer);
+bgImg?.addEventListener('mouseenter', () => timer && clearInterval(timer));
+bgImg?.addEventListener('mouseleave', startTimer);
 
-// Clock (fix your original "strong selector" issue)
-function updateClock() {
+// Small clock (EN)
+function updateSmallClock() {
+  if (!clockText) return;
   const d = new Date();
-  const dayMap = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  clockText.innerHTML = `${dayMap[d.getDay()]}<br>${d.toLocaleTimeString()}<br>${d.toLocaleDateString()}`;
+  const day = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d);
+  const time = new Intl.DateTimeFormat('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(d);
+  const date = new Intl.DateTimeFormat('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  clockText.innerHTML = `${day}<br>${time}<br>${date}`;
 }
-setInterval(updateClock, 250);
-updateClock();
+setInterval(updateSmallClock, 250);
+updateSmallClock();
 
 // Reveal on scroll
 const io = new IntersectionObserver((entries) => {
@@ -102,6 +102,106 @@ const io = new IntersectionObserver((entries) => {
 }, { threshold: 0.08 });
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-// Init
+// Init slider
 render(0);
 startTimer();
+
+
+// ===== Top-right calendar widget (EN) =====
+const calTime = document.getElementById('calTime');
+const calDate = document.getElementById('calDate');
+const calSub  = document.getElementById('calSub');
+const calMonth = document.getElementById('calMonth');
+const calGrid = document.getElementById('calGrid');
+const calPrev = document.getElementById('calPrev');
+const calNext = document.getElementById('calNext');
+const calTodayBtn = document.getElementById('calToday');
+
+function pad2(n){ return String(n).padStart(2, '0'); }
+function sameDay(a, b){
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+// current view month
+let calView = new Date();
+calView.setDate(1);
+
+// selected day
+let calSelected = new Date();
+
+function updateCalHeader(){
+  const now = new Date();
+
+  // Time with seconds (24h-like but using leading zeros)
+  calTime.textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+
+  // Date line: Thu, Dec 25, 2025
+  calDate.textContent = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short', month: 'short', day: '2-digit', year: 'numeric'
+  }).format(now);
+
+  // Sub line
+  if (calSub) calSub.textContent = 'Local time • Click a date to select';
+}
+
+function renderCalendar(){
+  const y = calView.getFullYear();
+  const m = calView.getMonth();
+
+  // Month line: December 2025
+  calMonth.textContent = new Intl.DateTimeFormat('en-US', {
+    month: 'long', year: 'numeric'
+  }).format(new Date(y, m, 1));
+
+  calGrid.innerHTML = '';
+
+  const first = new Date(y, m, 1);
+
+  // Monday-based week grid
+  const shift = (first.getDay() + 6) % 7; // Mon=0
+  const start = new Date(y, m, 1 - shift);
+  const today = new Date();
+
+  for (let k = 0; k < 42; k++){
+    const d = new Date(start);
+    d.setDate(start.getDate() + k);
+
+    const btn = document.createElement('button');
+    btn.className = 'cal__cell';
+    btn.type = 'button';
+    btn.textContent = d.getDate();
+
+    if (d.getMonth() !== m) btn.classList.add('is-other');
+    if (sameDay(d, today)) btn.classList.add('is-today');
+    if (sameDay(d, calSelected)) btn.classList.add('is-selected');
+
+    btn.addEventListener('click', () => {
+      calSelected = d;
+      renderCalendar();
+    });
+
+    calGrid.appendChild(btn);
+  }
+}
+
+calPrev?.addEventListener('click', () => {
+  calView = new Date(calView.getFullYear(), calView.getMonth()-1, 1);
+  renderCalendar();
+});
+
+calNext?.addEventListener('click', () => {
+  calView = new Date(calView.getFullYear(), calView.getMonth()+1, 1);
+  renderCalendar();
+});
+
+calTodayBtn?.addEventListener('click', () => {
+  const t = new Date();
+  calSelected = t;
+  calView = new Date(t.getFullYear(), t.getMonth(), 1);
+  renderCalendar();
+});
+
+// init calendar
+updateCalHeader();
+renderCalendar();
+setInterval(updateCalHeader, 250);
