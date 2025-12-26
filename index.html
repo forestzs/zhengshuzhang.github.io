@@ -4,42 +4,49 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Zhengshu Zhang</title>
-
-  <!-- Link external CSS -->
   <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
   <div class="wrap">
-    <div class="card">
-      <h1>Zhengshu Zhang</h1>
-      <div class="sub">USC MS in Spatial Data Science • Software Engineer / Los Angeles</div>
+    <div class="card highlight">
+      <h1 class="reveal">Zhengshu Zhang</h1>
+      <div class="sub reveal">USC MS Spatial Data Science • Software Engineer / Data Engineer • Los Angeles</div>
 
-      <div class="row">
-        <a class="btn" href="https://github.com/forestzs" target="_blank" rel="noreferrer">GitHub</a>
-        <a class="btn" href="https://www.linkedin.com/in/zhengshuzhang/" target="_blank" rel="noreferrer">LinkedIn</a>
-        <a class="btn" href="forestzhengshu@gmail.com">Email</a>
+      <div class="row reveal">
+        <a class="btn ripple" href="https://github.com/forestzs" target="_blank" rel="noreferrer">GitHub</a>
+        <a class="btn ripple" href="https://www.linkedin.com/in/zhengshuzhang/" target="_blank" rel="noreferrer">LinkedIn</a>
+        <a class="btn ripple" href="forestzhengshu@gmail.com">Email</a>
       </div>
 
-      <h2>Skills</h2>
-      <div>
-        <span class="tag">Java</span><span class="tag">Spring Boot</span><span class="tag">React</span><span class="tag">Ant Design</span>
-        <span class="tag">Python</span><span class="tag">SQL</span><span class="tag">GeoPandas</span><span class="tag">Docker</span>
+      <h2 class="reveal">Skills</h2>
+      <div class="reveal">
+        <span class="tag">Java</span>
+        <span class="tag">Spring Boot</span>
+        <span class="tag">React</span>
+        <span class="tag">Ant Design</span>
+        <span class="tag">Python</span>
+        <span class="tag">SQL</span>
+        <span class="tag">GeoPandas</span>
+        <span class="tag">Docker</span>
       </div>
 
-      <h2>Projects</h2>
-      <div class="proj">
+      <h2 class="reveal" id="projects">Projects</h2>
+      <div class="proj reveal">
         <b>EasyAI Web App</b> <span class="muted">— RAG / PDF Q&A</span>
         <div class="muted">LangChain + Vector Search + API + UI.</div>
       </div>
-      <div class="proj">
+      <div class="proj reveal">
         <b>Urban Heat Risk Analyzer</b> <span class="muted">— LA spatial analytics</span>
         <div class="muted">Temperature + canopy + buildings → risk index.</div>
       </div>
 
-      <h2>Contact</h2>
-      <div class="muted">Email me anytime: your_email@example.com</div>
+      <h2 class="reveal" id="contact">Contact</h2>
+      <div class="muted reveal">Email me anytime: your_email@example.com</div>
     </div>
   </div>
+
+  <!-- JS 放 body 最后 -->
+  <script src="./script.js"></script>
 </body>
 </html>
