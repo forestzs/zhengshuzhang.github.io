@@ -159,11 +159,10 @@
   // 4) Background slider (robust)
   // =========================
   const bgImg = $("bgImg");
-  // ✅ 兼容两套 id
   const bgPrevBtn = $("bgPrevBtn") || $("prevBtn");
   const bgNextBtn = $("bgNextBtn") || $("nextBtn");
 
-  // ✅ 你的真实图片
+  
   const rawImages = [
     "./images/qishen.jpg",
     "./images/funingna.jpg",
@@ -331,7 +330,7 @@
 
       const dKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
       if (d.getMonth() !== month) btn.classList.add("is-other");
-      if (dKey === todayKey) btn.classList.add("is-today");
+      if (dKey === todayKey) btn.classList.add("is-today", "today");
       if (selKey && dKey === selKey) btn.classList.add("is-selected");
 
       btn.addEventListener("click", () => {
