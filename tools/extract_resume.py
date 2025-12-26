@@ -1,278 +1,447 @@
-# tools/extract_resume.py
-# resume.pdf -> resume_raw.json (text) + resume.json (structured)
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+Extract text from resume.pdf and generate:
+- resume_raw.json: {generated_at, source, text}
+- resume.json: structured fields used by your website
+
+Usage:
+  python tools/extract_resume.py
+"""
+
+from __future__ import annotations
 
 import json
+import os
 import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
-
-import pdfplumber
-
-ROOT = Path(__file__).resolve().parents[1]
-PDF_PATH = ROOT / "resume.pdf"
-RAW_JSON = ROOT / "resume_raw.json"
-OUT_JSON = ROOT / "resume.json"
-
-MONTH_RE = re.compile(
-    r"\b(Jan|January|Feb|February|Mar|March|Apr|April|May|Jun|June|Jul|July|Aug|August|Sep|Sept|September|Oct|October|Nov|November|Dec|December)\b",
-    re.IGNORECASE,
-)
-YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
-BULLET_PREFIXES = ("■", "◼", "•", "-", "–", "—")
+from typing import List, Dict, Optional, Tuple
 
 
-def normalize_heading(s: str) -> str:
-    # Keep only letters, numbers; uppercase
-    return re.sub(r"[^A-Z0-9]", "", s.upper())
+# -----------------------------
+# PDF text extraction (robust)
+# -----------------------------
+def extract_text_from_pdf(pdf_path: str) -> str:
+    if not os.path.exists(pdf_path):
+        raise FileNotFoundError(f"Cannot find PDF: {pdf_path}")
+
+    # 1) pdfplumber
+    try:
+        import pdfplumber  # type: ignore
+        chunks: List[str] = []
+        with pdfplumber.open(pdf_path) as pdf:
+            for page in pdf.pages:
+                t = page.extract_text() or ""
+                chunks.append(t)
+        text = "\n".join(chunks)
+        if text.strip():
+            return text
+    except Exception:
+        pass
+
+    # 2) PyMuPDF
+    try:
+        import fitz  # type: ignore
+        doc = fitz.open(pdf_path)
+        chunks = []
+        for page in doc:
+            chunks.append(page.get_text("text") or "")
+        text = "\n".join(chunks)
+        if text.strip():
+            return text
+    except Exception:
+        pass
+
+    # 3) pypdf
+    try:
+        from pypdf import PdfReader  # type: ignore
+        reader = PdfReader(pdf_path)
+        chunks = []
+        for p in reader.pages:
+            chunks.append(p.extract_text() or "")
+        text = "\n".join(chunks)
+        if text.strip():
+            return text
+    except Exception:
+        pass
+
+    return ""
 
 
-def find_heading_index(lines, heading: str):
-    target = normalize_heading(heading)
-    for idx, ln in enumerate(lines):
-        if normalize_heading(ln) == target:
-            return idx
-    return None
+def normalize_text(text: str) -> str:
+    if not text:
+        return ""
 
+    # Normalize line endings
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
 
-def extract_text_by_words(pdf_path: Path) -> str:
-    """More stable than page.extract_text(): rebuild lines from extracted words."""
-    parts = []
-    with pdfplumber.open(str(pdf_path)) as pdf:
-        for page in pdf.pages:
-            words = page.extract_words(use_text_flow=True)
-            if not words:
-                # fallback
-                txt = page.extract_text() or ""
-                parts.append(txt)
-                continue
+    # Fix hyphenation across line breaks: "data-\nintensive" -> "data-intensive"
+    text = re.sub(r"(\w)-\n(\w)", r"\1-\2", text)
 
-            # sort by (top, x0)
-            words.sort(key=lambda w: (w["top"], w["x0"]))
+    # Normalize bullets
+    text = text.replace("•", "■")
+    text = text.replace("◼", "■").replace("◾", "■").replace("▪", "■").replace("●", "■")
 
-            lines = []
-            cur = []
-            cur_top = None
+    # Trim trailing spaces on each line
+    text = "\n".join([ln.rstrip() for ln in text.split("\n")])
 
-            for w in words:
-                t = w["top"]
-                text = (w.get("text") or "").strip()
-                if not text:
-                    continue
-
-                if cur_top is None:
-                    cur_top = t
-                    cur = [text]
-                    continue
-
-                # new line if vertical gap is large
-                if abs(t - cur_top) > 3.0:
-                    lines.append(" ".join(cur).strip())
-                    cur = [text]
-                    cur_top = t
-                else:
-                    cur.append(text)
-
-            if cur:
-                lines.append(" ".join(cur).strip())
-
-            page_text = "\n".join([ln for ln in lines if ln])
-            parts.append(page_text)
-
-    text = "\n".join(parts)
-    text = text.replace("\u00a0", " ")
+    # Reduce too many blank lines
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
+
     return text
 
 
-def split_name_if_needed(name: str) -> str:
-    # "ZhengshuZhang" -> "Zhengshu Zhang"
-    if " " not in name and re.search(r"[a-z][A-Z]", name):
-        name = re.sub(r"([a-z])([A-Z])", r"\1 \2", name)
-    return name.strip()
+def lines_nonempty(text: str) -> List[str]:
+    out: List[str] = []
+    for ln in text.split("\n"):
+        s = ln.strip()
+        if s:
+            out.append(s)
+    return out
 
 
-def parse_contact(lines):
-    phone = email = linkedin = location = ""
-    # look in first few lines for a pipe contact line
-    for ln in lines[0:8]:
-        if "|" in ln:
-            parts = [p.strip() for p in ln.split("|")]
-            for p in parts:
-                if "@" in p:
-                    email = p
-                elif "linkedin.com" in p:
-                    linkedin = p
-                elif re.search(r"\+?\d[\d\s-]{8,}", p):
-                    phone = p.replace(" ", "")
-                else:
-                    location = p
-            break
-    return phone, email, linkedin, location
+def iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
-def block(lines, start_idx, end_idx):
-    if start_idx is None:
+def unique_preserve(seq: List[str]) -> List[str]:
+    seen = set()
+    out = []
+    for x in seq:
+        k = x.strip()
+        if not k:
+            continue
+        if k.lower() in seen:
+            continue
+        seen.add(k.lower())
+        out.append(k)
+    return out
+
+
+# -----------------------------
+# Section helpers
+# -----------------------------
+SECTION_HEADERS = [
+    "SUMMARY",
+    "EDUCATION",
+    "EXPERIENCE",
+    "PROJECTS",
+    "TECHNICAL SKILLS",
+    "SKILLS",
+]
+
+
+def find_header_index(lines: List[str], header: str) -> int:
+    header_u = header.upper().strip()
+    for idx, ln in enumerate(lines):
+        if ln.upper().strip() == header_u:
+            return idx
+    return -1
+
+
+def slice_section(lines: List[str], header: str) -> List[str]:
+    start = find_header_index(lines, header)
+    if start < 0:
         return []
-    s = start_idx + 1
-    e = end_idx if end_idx is not None else len(lines)
-    return [ln for ln in lines[s:e] if ln.strip()]
+
+    # find next header
+    end = len(lines)
+    for j in range(start + 1, len(lines)):
+        if lines[j].upper().strip() in SECTION_HEADERS:
+            end = j
+            break
+    return lines[start + 1 : end]
 
 
-def parse_education(edu_lines):
-    entries = []
-    buf = []
-
-    def flush(buf_):
-        if not buf_:
-            return
-        school = buf_[0].strip()
-        degree = " ".join(buf_[1:]).strip() if len(buf_) > 1 else ""
-        # cleanup: remove trailing duplicated spaces
-        school = re.sub(r"\s{2,}", " ", school)
-        degree = re.sub(r"\s{2,}", " ", degree)
-        entries.append({"school": school, "degree": degree})
-
-    for ln in edu_lines:
-        # new school line heuristic
-        if re.search(r"\b(University|College|Institute)\b", ln) and not re.search(
-            r"\b(Master|Bachelor|PhD|Doctor)\b", ln, re.IGNORECASE
-        ):
-            flush(buf)
-            buf = [ln]
-        else:
-            if not buf:
-                buf = [ln]
-            else:
-                buf.append(ln)
-
-    flush(buf)
-    # keep top 2
-    return entries[:2]
+# -----------------------------
+# Parse basics (name, contact)
+# -----------------------------
+PHONE_RE = re.compile(r"(\+?\d[\d\-\s\(\)]{7,}\d)")
+EMAIL_RE = re.compile(r"([A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,})", re.IGNORECASE)
+URL_RE = re.compile(r"(https?://[^\s|]+)", re.IGNORECASE)
 
 
-def parse_projects(proj_lines):
-    projects = []
-    cur = None
+def parse_name(lines: List[str]) -> str:
+    if not lines:
+        return ""
+    # usually first line is name
+    return lines[0].strip()
 
-    def flush():
+
+def parse_contact_line(lines: List[str]) -> Dict[str, str]:
+    """
+    Typically second line:
+      +1 323-... | email | linkedin | location ...
+    """
+    contact = {"phone": "", "email": "", "linkedin": "", "github": "", "location": ""}
+
+    if len(lines) < 2:
+        return contact
+
+    line = lines[1]
+
+    # phone
+    m = PHONE_RE.search(line)
+    if m:
+        contact["phone"] = re.sub(r"\s+", "", m.group(1)).replace(")(", ") (")  # keep readable-ish
+
+    # email
+    m = EMAIL_RE.search(line)
+    if m:
+        contact["email"] = m.group(1).strip()
+
+    # urls
+    urls = URL_RE.findall(line)
+    # classify linkedin/github
+    for u in urls:
+        ul = u.lower()
+        if "linkedin.com" in ul:
+            contact["linkedin"] = u.strip()
+        elif "github.com" in ul:
+            contact["github"] = u.strip()
+
+    # location: remove known parts split by |
+    parts = [p.strip() for p in line.split("|")]
+    # take the last part that isn't email/url/phone
+    for p in reversed(parts):
+        if not p:
+            continue
+        if EMAIL_RE.search(p):
+            continue
+        if URL_RE.search(p):
+            continue
+        if PHONE_RE.search(p) and len(p) <= 25:
+            continue
+        # likely location
+        contact["location"] = p.strip()
+        break
+
+    return contact
+
+
+def parse_summary(lines: List[str]) -> str:
+    sec = slice_section(lines, "SUMMARY")
+    if not sec:
+        return ""
+    # join into paragraph
+    txt = " ".join(sec)
+    txt = re.sub(r"\s+", " ", txt).strip()
+    return txt
+
+
+# -----------------------------
+# Parse education
+# -----------------------------
+def parse_education(lines: List[str]) -> List[Dict[str, str]]:
+    sec = slice_section(lines, "EDUCATION")
+    if not sec:
+        return []
+
+    # Heuristic: education entries often appear as:
+    # School ... Location
+    # Degree ... Dates
+    # Repeat
+    items: List[Dict[str, str]] = []
+    i = 0
+    while i < len(sec):
+        school = sec[i].strip()
+        degree = ""
+        if i + 1 < len(sec):
+            degree = sec[i + 1].strip()
+
+        # If the "school" line looks like it is actually a continuation (very rare),
+        # skip it.
+        if school.upper() in SECTION_HEADERS:
+            break
+
+        items.append({"school": school, "degree": degree})
+        i += 2
+
+    # Remove obviously empty pairs
+    cleaned = []
+    for it in items:
+        if it["school"] or it["degree"]:
+            cleaned.append(it)
+    return cleaned
+
+
+# -----------------------------
+# Parse projects
+# -----------------------------
+MONTH_RE = r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t)?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
+PROJ_TIME_RE = re.compile(rf"^(.*?)(\b{MONTH_RE}\b.*\b\d{{4}}\b.*)$", re.IGNORECASE)
+BULLET_RE = re.compile(r"^[■\-\*]\s*(.+)$")
+
+
+def is_project_header(line: str) -> bool:
+    # project header line usually contains a month+year range
+    return PROJ_TIME_RE.match(line) is not None
+
+
+def parse_projects(lines: List[str]) -> List[Dict[str, object]]:
+    sec = slice_section(lines, "PROJECTS")
+    if not sec:
+        return []
+
+    projects: List[Dict[str, object]] = []
+    cur: Optional[Dict[str, object]] = None
+
+    def push_current():
         nonlocal cur
-        if cur:
-            cur["bullets"] = [b for b in cur["bullets"] if b.strip()]
-            projects.append(cur)
+        if not cur:
+            return
+        # normalize bullets
+        bullets = cur.get("bullets", [])
+        if isinstance(bullets, list):
+            cur["bullets"] = [b.strip() for b in bullets if str(b).strip()]
+        projects.append(cur)
         cur = None
 
-    for ln in proj_lines:
-        s = ln.strip()
-        if not s:
+    for ln in sec:
+        ln = ln.strip()
+
+        # New project header?
+        m = PROJ_TIME_RE.match(ln)
+        if m:
+            push_current()
+            title = m.group(1).strip(" -–—|")
+            time = m.group(2).strip()
+            cur = {"title": title, "time": time, "bullets": []}
             continue
 
-        is_bullet = s.startswith(BULLET_PREFIXES)
-        has_date = bool(MONTH_RE.search(s) and YEAR_RE.search(s))
-
-        # header line (project name + date range)
-        if (not is_bullet) and has_date:
-            flush()
-            # split header: everything before first month = name
-            m = MONTH_RE.search(s)
-            name = s[: m.start()].strip(" -–—\t") if m else s
-            time = s[m.start():].strip() if m else ""
-            cur = {"name": name, "time": time, "bullets": []}
+        # Bullet line
+        bm = BULLET_RE.match(ln)
+        if bm and cur is not None:
+            cur["bullets"].append(bm.group(1).strip())
             continue
 
-        # bullet
-        if is_bullet and cur:
-            b = s.lstrip("".join(BULLET_PREFIXES)).strip()
-            cur["bullets"].append(b)
-        else:
-            # continuation lines
-            if cur and cur["bullets"]:
-                cur["bullets"][-1] = (cur["bullets"][-1] + " " + s).strip()
+        # Continuation line (wrap)
+        if cur is not None:
+            if cur["bullets"]:
+                # append to last bullet
+                cur["bullets"][-1] = (cur["bullets"][-1] + " " + ln).strip()
+            else:
+                # sometimes description without bullet (rare)
+                cur["bullets"].append(ln)
 
-    flush()
-    return projects[:6]
+    push_current()
+    return projects
 
 
-def parse_skills(skill_lines):
-    text = "\n".join(skill_lines)
+# -----------------------------
+# Parse skills
+# -----------------------------
+def split_csvish(s: str) -> List[str]:
+    # split by comma; also tolerate semicolon
+    parts = re.split(r"[;,]", s)
+    return [p.strip() for p in parts if p.strip()]
 
-    def grab(label: str):
-        # match "Languages: xxx" even if bullet in front
-        m = re.search(rf"{label}\s*:\s*(.+)", text, re.IGNORECASE)
+
+def parse_skills(lines: List[str]) -> Dict[str, List[str]]:
+    """
+    From TECHNICAL SKILLS section, expect lines like:
+      ■ Languages: Java, ...
+      ■ Frameworks & Libraries: Spring Boot, ...
+      ■ Databases & Caching: PostgreSQL, ...
+      ■ Cloud & DevOps: AWS..., Docker, ...
+      ■ Tools & Testing: Git, JUnit, ...
+    """
+    sec = slice_section(lines, "TECHNICAL SKILLS")
+    if not sec:
+        # sometimes header is just "SKILLS"
+        sec = slice_section(lines, "SKILLS")
+    if not sec:
+        return {"languages": [], "frameworks": [], "tools": []}
+
+    text = "\n".join(sec)
+
+    def grab(label_pattern: str) -> List[str]:
+        """
+        IMPORTANT:
+        label_pattern may contain '|' alternatives.
+        We wrap it in a non-capturing group to avoid group() confusion,
+        and only capture the value part after ':'.
+        """
+        pat = rf"(?:^|\n)\s*[■\-\*]?\s*(?:{label_pattern})\s*:\s*([^\n]+)"
+        m = re.search(pat, text, flags=re.IGNORECASE)
         if not m:
             return []
-        val = m.group(1).strip()
-        # stop if it accidentally eats next line label
-        val = re.split(r"\n\s*[\u25A0\u25FC■◼•-]", val)[0].strip()
-        return [x.strip() for x in val.split(",") if x.strip()]
+        val = (m.group(1) or "").strip()
+        if not val:
+            return []
+        return split_csvish(val)
 
-    languages = grab("Languages")
-    frameworks = grab("Frameworks\s*&\s*Libraries|Frameworks\s*/\s*Libraries|Frameworks")
-    db = grab("Databases\s*&\s*Caching|Databases")
-    cloud = grab("Cloud\s*&\s*DevOps|Cloud")
-    tools = grab("Tools\s*&\s*Testing|Tools")
+    languages = grab(r"Languages?")
+    frameworks = grab(r"Frameworks\s*&\s*Libraries|Frameworks\s*/\s*Libraries|Frameworks(?:\s*&\s*Libs)?|Libraries")
+    db = grab(r"Databases\s*&\s*Cach(?:e|ing)|Databases|Database")
+    cloud = grab(r"Cloud\s*&\s*DevOps|Cloud|DevOps")
+    tools_testing = grab(r"Tools\s*&\s*Testing|Tools|Testing")
 
-    merged_tools = db + cloud + tools
+    # match your webpage groups: Data / Cloud / Tools
+    tools_combined = unique_preserve(db + cloud + tools_testing)
+
     return {
-        "languages": languages,
-        "frameworks": frameworks,
-        "tools": merged_tools,
+        "languages": unique_preserve(languages),
+        "frameworks": unique_preserve(frameworks),
+        "tools": tools_combined,
     }
 
 
-def main():
-    if not PDF_PATH.exists():
-        raise FileNotFoundError(f"Cannot find {PDF_PATH}")
+# -----------------------------
+# Build structured resume.json
+# -----------------------------
+def build_structured(text: str) -> Dict[str, object]:
+    ln = lines_nonempty(text)
 
-    text = extract_text_by_words(PDF_PATH)
+    name = parse_name(ln)
+    contact = parse_contact_line(ln)
+    summary = parse_summary(ln)
+    education = parse_education(ln)
+    projects = parse_projects(ln)
+    skills = parse_skills(ln)
 
-    RAW_JSON.write_text(
-        json.dumps(
-            {
-                "generated_at": datetime.now(timezone.utc).isoformat(),
-                "source": "resume.pdf",
-                "text": text,
-            },
-            ensure_ascii=False,
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
+    # Subtitle is usually not inside PDF; keep a stable default or empty.
+    subtitle_default = "Software Engineer • USC MS Spatial Data Science • Los Angeles"
 
-    raw_lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    name = split_name_if_needed(raw_lines[0] if raw_lines else "Your Name")
-    phone, email, linkedin, location = parse_contact(raw_lines)
-
-    idx_sum = find_heading_index(raw_lines, "SUMMARY")
-    idx_edu = find_heading_index(raw_lines, "EDUCATION")
-    idx_proj = find_heading_index(raw_lines, "PROJECTS")
-    idx_skill = find_heading_index(raw_lines, "TECHNICAL SKILLS")
-
-    summary = " ".join(block(raw_lines, idx_sum, idx_edu)).strip()
-
-    education = parse_education(block(raw_lines, idx_edu, idx_proj))
-    projects = parse_projects(block(raw_lines, idx_proj, idx_skill))
-    skills = parse_skills(block(raw_lines, idx_skill, None))
-
-    out = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+    out: Dict[str, object] = {
+        "generated_at": iso_now(),
         "source": "resume.pdf",
-        "name": name,
-        "subtitle": "Software Engineer • USC MS Spatial Data Science • Los Angeles",
+        "name": name or "Zhengshu Zhang",
+        "subtitle": subtitle_default,
         "summary": summary,
         "resumeUrl": "./resume.pdf",
-        "contact": {
-            "phone": phone,
-            "email": email,
-            "linkedin": linkedin,
-            "github": "https://github.com/forestzs",
-            "location": location,
-        },
+        "contact": contact,
         "education": education,
         "projects": projects,
         "skills": skills,
     }
+    return out
 
-    OUT_JSON.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+
+def write_json(path: str, obj: Dict[str, object]) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=2)
+
+
+def main() -> None:
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    pdf_path = os.path.join(repo_root, "resume.pdf")
+
+    raw_text = normalize_text(extract_text_from_pdf(pdf_path))
+
+    raw_out = {
+        "generated_at": iso_now(),
+        "source": "resume.pdf",
+        "text": raw_text,
+    }
+    structured = build_structured(raw_text)
+
+    write_json(os.path.join(repo_root, "resume_raw.json"), raw_out)
+    write_json(os.path.join(repo_root, "resume.json"), structured)
+
+    print("✅ Generated resume_raw.json and resume.json")
 
 
 if __name__ == "__main__":
