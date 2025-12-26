@@ -126,6 +126,24 @@ body{
   line-height: 34px;
   transition: transform .12s ease, background .12s ease, border-color .12s ease;
 }
+
+/* Calendar collapse toggle */
+.cal__toggle{
+  font-weight: 900;
+}
+
+/* Collapsed state: only keep top line (time/date + buttons) */
+.cal.is-collapsed .cal__monthRow,
+.cal.is-collapsed .cal__dow,
+.cal.is-collapsed .cal__grid{
+  display: none;
+}
+
+/* Optional: make collapsed widget a bit tighter */
+.cal.is-collapsed{
+  padding-bottom: 14px;
+}
+
 .cal__btn:hover{
   transform: translateY(-1px);
   background: rgba(0,0,0,.28);
