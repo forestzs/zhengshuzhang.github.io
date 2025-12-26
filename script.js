@@ -58,12 +58,7 @@ function render(index) {
 
   // Show clock after first slide (same idea as your original code)
   // Source: original toggles clock display :contentReference[oaicite:12]{index=12}
-  if (idx !== 0) {
-    bgClock.style.display = 'block';
-    bgClock.style.borderColor = 'color-mix(in oklab, var(--accent) 65%, rgba(255,255,255,.18))';
-  } else {
-    bgClock.style.display = 'none';
-  }
+  bgClock.style.display = 'block';
 }
 
 function startTimer() {
