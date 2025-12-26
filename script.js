@@ -293,6 +293,38 @@ if (bgImg) {
   const calNext = $("calNext");
   const calToday = $("calToday");
 
+  const calWidget = $("calWidget");
+  const calToggle = $("calToggle");
+  const CAL_COLLAPSE_KEY = "calCollapsed";
+
+  function setCalendarCollapsed(collapsed) {
+    if (!calWidget || !calToggle) return;
+
+    calWidget.classList.toggle("is-collapsed", collapsed);
+    calToggle.setAttribute("aria-expanded", String(!collapsed));
+    calToggle.textContent = collapsed ? "＋" : "–";
+    try { localStorage.setItem(CAL_COLLAPSE_KEY, collapsed ? "1" : "0"); } catch (_) {}
+  }
+
+  if (calToggle && calWidget) {
+    let saved = null;
+    try { saved = localStorage.getItem(CAL_COLLAPSE_KEY); } catch (_) {}
+
+    // ✅ Mobile default collapsed (only first time). If you don't want this, set defaultCollapsed = false
+    const defaultCollapsed =
+      saved !== null
+        ? saved === "1"
+        : window.matchMedia("(max-width: 720px)").matches;
+
+    setCalendarCollapsed(defaultCollapsed);
+
+    calToggle.addEventListener("click", () => {
+      const collapsed = !calWidget.classList.contains("is-collapsed");
+      setCalendarCollapsed(collapsed);
+    });
+  }
+
+
   let view = new Date();
   let selected = null;
 
